@@ -1,14 +1,19 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 
-using Microsoft.MixedReality.Toolkit.Core.Interfaces.InputSystem;
-using Microsoft.MixedReality.Toolkit.SDK.UX.Interactable.States;
 using System.Collections;
-using System.Collections.Generic;
+
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Microsoft.MixedReality.Toolkit.SDK.UX.Interactable.Events
+using Microsoft.MixedReality.Toolkit.Core.Interfaces.InputSystem;
+using Microsoft.MixedReality.Toolkit.SDK.UX.Interactable.States;
+using Microsoft.MixedReality.Toolkit.SDK.UX.Interactable.Events;
+using Microsoft.MixedReality.Toolkit.SDK.UX.Interactable;
+
+using InfoVis.MixedReality.Actions;
+
+namespace InfoVis.MixedReality.Interaction.Handlers
 {
     /// <summary>
     /// Example of building a custom receiver that can be loaded as part of the events on the Interactable or
@@ -18,32 +23,32 @@ namespace Microsoft.MixedReality.Toolkit.SDK.UX.Interactable.Events
     /// </summary>
     public class SpawnBallInteractablesReceiver : ReceiverBase
     {
-        private State lastState;
-        private string statusString = "State: %state%";
-        private string clickString = "Clicked!";
-        private string voiceString = "VoiceCommand: %voiceCommand%";
-        private string outputString;
+        protected State lastState;
+        protected string statusString = "State: %state%";
+        protected string clickString = "Clicked!";
+        protected string voiceString = "VoiceCommand: %voiceCommand%";
+        protected string outputString;
 
-        private string lastVoiceCommand = "";
+        protected string lastVoiceCommand = "";
 
-        private float clickTime = 2;
-        private Coroutine showClicked;
-        private Coroutine showVoice;
-        private int clickCount = 0;
+        protected float clickTime = 2;
+        protected Coroutine showClicked;
+        protected Coroutine showVoice;
+        protected int clickCount = 0;
+        public string ResourceToSpawn = "Icosa";
 
-        private GameObject Spawner = null;
+        protected ObjectSpawner Spawner { get; } = new ObjectSpawner();
 
         public SpawnBallInteractablesReceiver(UnityEvent ev) : base(ev)
         {
             Name = "SpawnBallEvent";
             HideUnityEvents = true; // hides Unity events in the receiver - meant to be code only
-            Spawner = GameObject.FindGameObjectWithTag("ObjectSpawner");
         }
 
         /// <summary>
         /// find a textMesh to output button status to
         /// </summary>
-        private void SetOutput()
+        protected void SetNearbyTextMeshToState()
         {
             if (Host != null)
             {
@@ -73,7 +78,7 @@ namespace Microsoft.MixedReality.Toolkit.SDK.UX.Interactable.Events
         /// </summary>
         /// <param name="time"></param>
         /// <returns></returns>
-        private IEnumerator ClickTimer(float time)
+        protected IEnumerator ClickTimer(float time)
         {
             yield return new WaitForSeconds(time);
             showClicked = null;
@@ -84,54 +89,10 @@ namespace Microsoft.MixedReality.Toolkit.SDK.UX.Interactable.Events
         /// </summary>
         /// <param name="time"></param>
         /// <returns></returns>
-        private IEnumerator VoiceTimer(float time)
+        protected IEnumerator VoiceTimer(float time)
         {
             yield return new WaitForSeconds(time);
             showVoice = null;
-        }
-
-        /// <summary>
-        /// Destroys a GameObject after a specified amount of time
-        /// </summary>
-        /// <param name="time"></param>
-        /// <param name="toDestroy"></param>
-        /// <returns></returns>
-        private IEnumerator DestroyTimer(float time, GameObject toDestroy)
-        {
-            yield return new WaitForSeconds(time);
-            GameObject.Destroy(toDestroy);
-        }
-
-        /// <summary>
-        /// Linearly decreases the alpha channel for all materials in a given GameObject over a specified duration
-        /// </summary>
-        /// <param name="duration"></param>
-        /// <param name="targetAlpha"></param>
-        /// <param name="toFade"></param>
-        /// <returns></returns>
-        private IEnumerator FadeTo(float duration, float targetAlpha, GameObject toFade)
-        {
-            MeshRenderer renderer = toFade.GetComponentInChildren<MeshRenderer>();
-            System.Tuple<Material, float>[] materials = new System.Tuple<Material, float>[renderer.materials.Length];
-
-            int i = 0;
-            foreach (Material m in renderer.materials)
-            {
-                materials[i++] = new System.Tuple<Material, float>(m, m.color.a);
-            }
-
-            for (float t = 0.0f; t < duration; t += Time.deltaTime)
-            {
-                foreach (System.Tuple<Material, float> tuple in materials)
-                {
-                    Material m = tuple.Item1;
-                    Color curr = m.color;
-                    curr.a = Mathf.Lerp(tuple.Item2, targetAlpha, t / duration);
-                    m.color = curr;
-                }
- 
-                yield return null;
-            }
         }
 
         /// <summary>
@@ -180,7 +141,7 @@ namespace Microsoft.MixedReality.Toolkit.SDK.UX.Interactable.Events
                  */
 
                 lastState = state.CurrentState();
-                SetOutput();
+                SetNearbyTextMeshToState();
             }
         }
 
@@ -202,19 +163,12 @@ namespace Microsoft.MixedReality.Toolkit.SDK.UX.Interactable.Events
                 }
 
                 showClicked = Host.StartCoroutine(ClickTimer(clickTime));
+
+                Spawner?.Spawn(Host, ResourceToSpawn);
             }
-
-            if (Spawner != null)
-            {
-                GameObject item = GameObject.Instantiate(Resources.Load<GameObject>("Icosa"));
-                item.transform.position = Spawner.transform.position;
-
-                Host.StartCoroutine(DestroyTimer(10f, item));               
-                Host.StartCoroutine(FadeTo(10f, 0f, item));
-            }
-
+            
             clickCount++;
-            SetOutput();
+            SetNearbyTextMeshToState();
         }
 
         /// <summary>
@@ -239,9 +193,11 @@ namespace Microsoft.MixedReality.Toolkit.SDK.UX.Interactable.Events
                 }
 
                 showVoice = Host.StartCoroutine(VoiceTimer(clickTime));
+
+                Spawner?.Spawn(Host, ResourceToSpawn);
             }
 
-            SetOutput();
+            SetNearbyTextMeshToState();
         }
     }
 }
