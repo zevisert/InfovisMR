@@ -18,19 +18,19 @@ using InfoVis.MixedReality.Actions;
 namespace InfoVis.MixedReality.Interaction.Handlers
 {
 
-    public class AverageDailyViewersClickHandler : ReceiverBase
+    public class AverageDailyChannelsClickHandler : ReceiverBase
     {
         private TimeSeriesData data;
         protected ObjectSpawner Spawner { get; } = new ObjectSpawner();
         protected Coroutine spawnCoro = null;
 
 
-        public AverageDailyViewersClickHandler(UnityEvent ev) : base(ev)
+        public AverageDailyChannelsClickHandler(UnityEvent ev) : base(ev)
         {
-            Name = "OnAverageViewersClicked";
+            Name = "OnAverageChannelsClicked";
             HideUnityEvents = true;
 
-            LoadDataFromFile("average_daily_viewers.json");
+            LoadDataFromFile("average_daily_channels.json");
         }
 
         protected void LoadDataFromFile(string visDataFileName)

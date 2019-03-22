@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: MRTK-Config
   m_EditorClassIdentifier: 
   isCustomProfile: 1
-  targetExperienceScale: 3
+  targetExperienceScale: 2
   enableCameraProfile: 1
   cameraProfile: {fileID: 11400000, guid: b645223a916722b47a93f6ee4b23e6ae, type: 2}
   enableInputSystem: 1

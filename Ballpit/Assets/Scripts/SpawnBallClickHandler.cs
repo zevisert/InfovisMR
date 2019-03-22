@@ -12,6 +12,8 @@ using Microsoft.MixedReality.Toolkit.SDK.UX.Interactable.Events;
 using Microsoft.MixedReality.Toolkit.SDK.UX.Interactable;
 
 using InfoVis.MixedReality.Actions;
+using Microsoft.MixedReality.Toolkit.SDK.Utilities.Solvers;
+using TMPro;
 
 namespace InfoVis.MixedReality.Interaction.Handlers
 {
@@ -35,7 +37,7 @@ namespace InfoVis.MixedReality.Interaction.Handlers
         protected Coroutine showClicked;
         protected Coroutine showVoice;
         protected int clickCount = 0;
-        public string ResourceToSpawn = "Icosa";
+        public string ResourceToSpawn = "DataBall-Apex";
 
         protected ObjectSpawner Spawner { get; } = new ObjectSpawner();
 
@@ -43,34 +45,6 @@ namespace InfoVis.MixedReality.Interaction.Handlers
         {
             Name = "SpawnBallEvent";
             HideUnityEvents = true; // hides Unity events in the receiver - meant to be code only
-        }
-
-        /// <summary>
-        /// find a textMesh to output button status to
-        /// </summary>
-        protected void SetNearbyTextMeshToState()
-        {
-            if (Host != null)
-            {
-                TextMesh mesh = Host.GetComponentInChildren<TextMesh>();
-
-                if (mesh != null)
-                {
-                    outputString = statusString.Replace("%state%", lastState.Name);
-
-                    if (showClicked != null)
-                    {
-                        outputString += "\n" + clickString + "(" + clickCount + ")";
-                    }
-
-                    if (showVoice != null)
-                    {
-                        outputString += "\n" + voiceString.Replace("%voiceCommand%", lastVoiceCommand);
-                    }
-
-                    mesh.text = outputString;
-                }
-            }
         }
 
         /// <summary>
@@ -96,6 +70,18 @@ namespace InfoVis.MixedReality.Interaction.Handlers
         }
 
         /// <summary>
+        /// Spawns the handler's object
+        /// </summary>
+        protected void OnShouldSpawnObject()
+        {
+            GameObject gameObject = Spawner?.Spawn(Host, ResourceToSpawn);
+            if (gameObject != null)
+            {
+                Manipulation.SizeAndLabelDataball(0.5f, "test", gameObject);
+            }
+        }
+
+        /// <summary>
         /// Called on update, check to see if the state has changed sense the last call
         /// </summary>
         /// <param name="state"></param>
@@ -104,44 +90,7 @@ namespace InfoVis.MixedReality.Interaction.Handlers
         {
             if (state.CurrentState() != lastState)
             {
-                // the state has changed, do something new
-                /*
-                bool hasDown = state.GetState(InteractableStates.InteractableStateEnum.Pressed).Value > 0;
-
-                bool focused = state.GetState(InteractableStates.InteractableStateEnum.Focus).Value > 0;
-
-                bool isDisabled = state.GetState(InteractableStates.InteractableStateEnum.Disabled).Value > 0;
-
-                bool hasInteractive = state.GetState(InteractableStates.InteractableStateEnum.Interactive).Value > 0;
-
-                bool hasObservation = state.GetState(InteractableStates.InteractableStateEnum.Observation).Value > 0;
-
-                bool hasObservationTargeted = state.GetState(InteractableStates.InteractableStateEnum.ObservationTargeted).Value > 0;
-
-                bool isTargeted = state.GetState(InteractableStates.InteractableStateEnum.Targeted).Value > 0;
-
-                bool isToggled = state.GetState(InteractableStates.InteractableStateEnum.Toggled).Value > 0;
-
-                bool isVisited = state.GetState(InteractableStates.InteractableStateEnum.Visited).Value > 0;
-
-                bool isDefault = state.GetState(InteractableStates.InteractableStateEnum.Default).Value > 0;
-
-                bool hasGesture = state.GetState(InteractableStates.InteractableStateEnum.Gesture).Value > 0;
-
-                bool hasGestureMax = state.GetState(InteractableStates.InteractableStateEnum.GestureMax).Value > 0;
-
-                bool hasCollistion = state.GetState(InteractableStates.InteractableStateEnum.Collision).Value > 0;
-
-                bool hasCustom = state.GetState(InteractableStates.InteractableStateEnum.Custom).Value > 0;
-               
-                or: 
-
-                bool hasFocus = source.HasFocus;
-                bool hasPress = source.HasPress;
-                 */
-
                 lastState = state.CurrentState();
-                SetNearbyTextMeshToState();
             }
         }
 
@@ -164,11 +113,10 @@ namespace InfoVis.MixedReality.Interaction.Handlers
 
                 showClicked = Host.StartCoroutine(ClickTimer(clickTime));
 
-                Spawner?.Spawn(Host, ResourceToSpawn);
+                OnShouldSpawnObject();
             }
-            
+
             clickCount++;
-            SetNearbyTextMeshToState();
         }
 
         /// <summary>
@@ -194,10 +142,8 @@ namespace InfoVis.MixedReality.Interaction.Handlers
 
                 showVoice = Host.StartCoroutine(VoiceTimer(clickTime));
 
-                Spawner?.Spawn(Host, ResourceToSpawn);
+                OnShouldSpawnObject();
             }
-
-            SetNearbyTextMeshToState();
         }
     }
 }
