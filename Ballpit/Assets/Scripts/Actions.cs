@@ -11,10 +11,13 @@ namespace InfoVis.MixedReality.Actions
 {
     public class ObjectSpawner
     {
-        GameObject origin = GameObject.FindGameObjectWithTag("ObjectSpawner");
+        GameObject origin = GameObject.FindGameObjectWithTag("ObjectSpawner/Mesh");
+        float initialSize;
 
         public ObjectSpawner()
-        { }
+        {
+            initialSize = origin.GetComponent<Renderer>().bounds.size.x;
+        }
 
         public GameObject Spawn(MonoBehaviour Host, string name, float destroyAfter = 10f)
         {
@@ -25,6 +28,11 @@ namespace InfoVis.MixedReality.Actions
             Host.StartCoroutine(TimedActions.FadeTo(destroyAfter, 0f, item));
 
             return item;
+        }
+
+        public float getScale()
+        {
+            return origin.GetComponent<Renderer>().bounds.size.x / initialSize;
         }
     }
 
@@ -73,14 +81,20 @@ namespace InfoVis.MixedReality.Actions
             }
         }
 
-        public static IEnumerator SpawnSeries(System.Func<string, GameObject> spawn, TimeSeriesData datasource, float tBetweeenItems)
+        public static IEnumerator SpawnSeries(MonoBehaviour Host, ObjectSpawner spawner, float destroyAfter, TimeSeriesData datasource, float tBetweeenItems, string visualizationName)
         {
-            (string, int)[] maxs = datasource.datasets.Select(d => (d.label, d.data.Max())).ToArray();
-            (string, int)[] mins = datasource.datasets.Select(d => (d.label, d.data.Min())).ToArray();
+
+            Manipulation.UpdatePanelVisName(visualizationName);
+
+            int max = datasource.datasets.Select(d => d.data.Max()).Max();
+            int min = datasource.datasets.Select(d => d.data.Min()).Min();
 
 
             for (int i = 0; i < datasource.labels.Length; ++i)
             {
+
+                Manipulation.UpdatePanelInfo($"{datasource.labels[i]}");
+
                 foreach (TimeSeriesData.Dataset dataset in datasource.datasets)
                 {                
                     string objName = "";
@@ -94,29 +108,22 @@ namespace InfoVis.MixedReality.Actions
                             break;
                     }
 
-                    
-
                     int datapoint = dataset.data[i];
 
-                    float size = Mathf.InverseLerp(
-                        mins.First(v => v.Item1 == dataset.label).Item2,
-                        maxs.First(v => v.Item1 == dataset.label).Item2,
-                        datapoint
-                    );
+                    float spawnerScale = spawner.getScale();
+                    float size = Mathf.InverseLerp(min, max, datapoint) * spawnerScale;
 
                     if (size > 0)
                     {
-                        GameObject item = spawn(objName);
+                        GameObject item = spawner.Spawn(Host, objName, destroyAfter);
                         Manipulation.SizeAndLabelDataball(size, $"{ datapoint }", item);
                     }
-
-                    yield return new WaitForEndOfFrame();
+                    yield return new WaitForSeconds(0.1f);
                 }
-
-                Debug.Log($"Series label is {datasource.labels[i]}");
-
                 yield return new WaitForSeconds(tBetweeenItems);
             }
+
+            Manipulation.UpdatePanelVisName("No visualization running");
         }
     }
 
@@ -136,7 +143,7 @@ namespace InfoVis.MixedReality.Actions
 
                     if (infoPanel != null)
                     {
-                        infoPanel.GetComponent<Orbital>().LocalOffset = new Vector3(0, sphere.GetComponent<Renderer>().bounds.size.y + 0.1f, 0);
+                        infoPanel.GetComponent<Orbital>().WorldOffset = new Vector3(0, sphere.GetComponent<Renderer>().bounds.size.y + 0.1f, 0);
 
                         if (valueText != null)
                         {
@@ -151,6 +158,19 @@ namespace InfoVis.MixedReality.Actions
             }
 
             return dataBall;
+        }
+
+        public static void UpdatePanelInfo(string infoText)
+        {
+            TextMesh infoTextMesh = GameObject.FindGameObjectWithTag("InfoPanel/InfoText").GetComponent<TextMesh>();
+            infoTextMesh.text = infoText;
+        }
+
+
+        public static void UpdatePanelVisName(string visName)
+        {
+            TextMesh visNameMesh = GameObject.FindGameObjectWithTag("InfoPanel/VisName").GetComponent<TextMesh>();
+            visNameMesh.text = visName;
         }
     }
 }

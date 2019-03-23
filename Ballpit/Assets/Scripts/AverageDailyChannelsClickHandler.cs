@@ -48,7 +48,7 @@ namespace InfoVis.MixedReality.Interaction.Handlers
 
         private IEnumerator SpawnDatasets()
         {
-            yield return TimedActions.SpawnSeries((string name) => Spawner?.Spawn(Host, name, 2f), data, 0.1f);
+            yield return TimedActions.SpawnSeries(Host, Spawner, 7f, data, 0.1f, "Avg Daily Channels");
 
             // Set button state back to Default
             Debug.Log("Done spawning");
@@ -68,6 +68,8 @@ namespace InfoVis.MixedReality.Interaction.Handlers
             else
             {
                 Host.StopCoroutine(spawnCoro);
+                Manipulation.UpdatePanelVisName("No Visualization Running");
+                Manipulation.UpdatePanelInfo("-- No Info --");
             }
         }
     }

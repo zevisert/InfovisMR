@@ -4,8 +4,11 @@
 TagManager:
   serializedVersion: 2
   tags:
-  - ObjectSpawner
-  - InfoPanel
+  - InfoPanel/InfoText
+  - InfoPanel/VisName
+  - InfoPanel/Container
+  - ObjectSpawner/Mesh
+  - ObjectSpawner/Container
   layers:
   - Default
   - TransparentFX
